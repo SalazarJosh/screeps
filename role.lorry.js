@@ -13,6 +13,7 @@ module.exports = {
       _.sum(creep.carry) == creep.carryCapacity) {
       // switch state
       creep.memory.working = true;
+      creep.memory.targetContainer = undefined;
     }
 
     // if creep is supposed to transfer to a structure
@@ -47,9 +48,12 @@ module.exports = {
       // find a tower if there aren't any spawns or extensions
       if (structure == undefined) {
         var structures = creep.room.find(FIND_MY_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_TOWER)
+          filter: (s) => (s.structureType == STRUCTURE_TOWER) &&
+          s.energy < s.energyCapacity
         });
-        structure = _.min(structures, 'energy');
+        if(structures.length > 0){
+          structure = _.min(structures, 'energy');
+        }
       }
 
       // look for the terminal if it has less than 100k energy
@@ -59,7 +63,6 @@ module.exports = {
           structure = undefined;
         }
       }
-
       // if there is nothing else to put energy in, put it in storage
       if (structure == undefined && creep.room.storage != undefined) {
         structure = creep.room.storage;
@@ -78,20 +81,20 @@ module.exports = {
 
     // if creep is supposed to get energy
     else {
-      var container;
       var controllerContainer;
-
-      //var storage = _.filter(creep.room.find(FIND_STRUCTURES), s => s.structureType == STRUCTURE_STORAGE);
-
-      // get energy from storage first
+      
+      // get energy from storage first if the storage has enough energy AND if
+      // the room needs energy. We don't want to keep withdrawing from Storage
+      // if the room doesn't need energy.
       if (creep.room.storage != undefined) {
-        if (creep.room.storage.store[RESOURCE_ENERGY] > 10000) {
-          container = creep.room.storage;
+        if (creep.room.storage.store[RESOURCE_ENERGY] > 10000 &&
+          creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+          creep.memory.targetContainer = creep.room.storage;
         }
       }
 
       // if there is nothing in storage, get energy from link by storage
-      if (container == undefined) {
+      if (creep.memory.targetContainer == undefined) {
         // look for link by storage
         var links = _.filter(creep.room.find(FIND_STRUCTURES), s => s.structureType == STRUCTURE_LINK);
 
@@ -101,14 +104,14 @@ module.exports = {
             filter: s => s.structureType == STRUCTURE_STORAGE
           })[0];
           if (isStorageLink != undefined && link.energy > 0) {
-            container = link;
+            creep.memory.targetContainer = link;
           }
         }
       }
 
       // if there is nothing in storage or if there is nothing in the link,
       // get energy from a container that isn't by the controller
-      if (container == undefined) {
+      if (creep.memory.targetContainer == undefined || creep.memory.targetContainer.store[RESOURCE_ENERGY] == 0) {
         // look for container by controller
         containerController = creep.room.controller.pos.findInRange(FIND_STRUCTURES, 3, {
           filter: s => s.structureType == STRUCTURE_CONTAINER
@@ -116,26 +119,40 @@ module.exports = {
 
         // if there isn't a container by the controller, look for nearest container
         if (containerController != undefined) {
-          // find closest container
-          container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: s => s.structureType == STRUCTURE_CONTAINER &&
-              s.store[RESOURCE_ENERGY] >= 90 &&
-              s.id != containerController.id
+          // get all containers in the room
+          var roomContainers = creep.room.find(FIND_STRUCTURES, {
+            filter: (s) => s.structureType == STRUCTURE_CONTAINER &&
+            s.store[RESOURCE_ENERGY] > 0
           });
+
+          var allContainer = [];
+          // Calculate the percentage of energy in each container.
+          for (var i = 0; i < roomContainers.length; i++) {
+            allContainer.push({
+              energyPercent: ((roomContainers[i].store.energy / roomContainers[i].storeCapacity) * 100),
+              id: roomContainers[i].id
+            });
+          }
+          // Get the container containing the most energy.
+          var highestContainer = _.max(allContainer, function(container) {
+            return container.energyPercent;
+          });
+          creep.memory.targetContainer = Game.getObjectById(highestContainer.id);
         }
 
         // if there is a container by the controller, look for the nearest container
         // that isn't by the controller
         else {
-          container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+          creep.memory.targetContainer = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: s => s.structureType == STRUCTURE_CONTAINER &&
               s.store[RESOURCE_ENERGY] >= 90
           });
         }
       }
 
-      // if one was found
-      if (container != undefined) {
+      // if the creep has a target contaienr
+      if (creep.memory.targetContainer != undefined) {
+        var container = Game.getObjectById(creep.memory.targetContainer.id);
         creep.memory.linksByMiner = container.pos.findInRange(FIND_STRUCTURES, 1, {
           filter: s => s.structureType == STRUCTURE_LINK
         });
@@ -146,7 +163,7 @@ module.exports = {
           creep.travelTo(container);
         }
       }
-      if (container == undefined && _.sum(creep.carry) > 0){
+      if (creep.memory.targetContainer == undefined && _.sum(creep.carry) > 0){
         creep.memory.working == true;
       }
     }

@@ -42,22 +42,22 @@ StructureTower.prototype.defend =
         weakestRampart,
         weakestWall;
 
-      // get all walls
+      // get all walls and make sure they're not game generated barriers
       var walls = this.room.find(FIND_STRUCTURES, {
-        filter: (s) => s.structureType == STRUCTURE_WALL
+        filter: (s) => s.structureType == STRUCTURE_WALL &&
+        s.pos.x < 49 && s.pos.y < 49
       });
 
       // get all ramparts
       var ramparts = this.room.find(FIND_STRUCTURES, {
         filter: (s) => s.structureType == STRUCTURE_RAMPART
-        && s.hits < 10000000
+        && s.hits < 1000000
       });
-      if (walls.length > 0 &&
-        this.room.name != 'E15S13' &&
-        this.room.name != 'E14S17') {
-        weakestWall = _.min(walls, 'hits');
-        target = weakestWall;
-      }
+
+      // if (walls.length > 0) {
+      //   weakestWall = _.min(walls, 'hits');
+      //   target = weakestWall;
+      // }
       if (ramparts.length > 0) {
         weakestRampart = _.min(ramparts, 'hits');
         if (weakestWall != undefined){
