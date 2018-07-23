@@ -72,15 +72,9 @@ StructureSpawn.prototype.spawnCreepsIfNecessary =
       if (name == undefined &&
         this.room.energyAvailable == this.room.energyCapacityAvailable &&
         this.room.controller.level < 3 &&
-        numberOfCreeps['upgrader'] + numberOfCreeps['builder'] < 6
+        numberOfCreeps['builder'] < 6
       ) {
-        numberOfConstructionSites = Game.rooms[room].find(FIND_CONSTRUCTION_SITES);
-        if(numberOfConstructionSites > 1){
-          name = this.createCustomCreep(this.room.energyAvailable, 'builder', this.room.name);
-        }
-        else{
-          name = this.createCustomCreep(this.room.energyAvailable, 'upgrader', this.room.name);
-        }
+        name = this.createCustomCreep(this.room.energyAvailable, 'builder', this.room.name);
       }
       // if we are spawning something, print the details to the console
       if (name != undefined && _.isString(name)) {
@@ -266,6 +260,7 @@ StructureSpawn.prototype.checkForMiningRoomCreeps =
     // work if there is vision in that room since we need to count the sources
     // in the room.
     for (let roomName in this.memory.miningRooms) {
+
       if (Game.rooms[roomName] != undefined) {
         var enemiesInRoom = Game.rooms[roomName].find(FIND_HOSTILE_CREEPS);
         if (enemiesInRoom.length > 0 && !_.some(creepsFromRoom, c =>
@@ -297,8 +292,8 @@ StructureSpawn.prototype.checkForMiningRoomCreeps =
               }
             }
           }
-          // if we don't need a miner, spawn a claimer
-          if (name == undefined) {
+          // if we don't need a miner, spawn a claimer if we can afford it
+          if (name == undefined && this.energyCapacityAvailable > 1600) {
             //console.log(roomName, Game.rooms[roomName].controller.reservation)
             numberOfMiningRoomClaimers[roomName] = _.sum(Game.creeps, (c) =>
               c.memory.role == 'roomReserver' && c.memory.target == roomName)

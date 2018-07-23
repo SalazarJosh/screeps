@@ -78,13 +78,6 @@ Creep.prototype.depositEnergy =
 
     // if we can see our home room...
     if (homeRoom != undefined) {
-      // look for storage
-      targetStructure = homeRoom.find(FIND_MY_STRUCTURES, {
-        filter: (s) => s.structureType == STRUCTURE_STORAGE &&
-          _.sum(s.store) < s.storeCapacity
-      });
-
-
       // if the storage is full, drop it into the container by the controller
       if (targetStructure == undefined) {
         controllerContainer = homeRoom.controller.pos.findInRange(FIND_STRUCTURES, 3, {
@@ -95,7 +88,7 @@ Creep.prototype.depositEnergy =
           targetStructure = controllerContainer;
         }
       }
-
+      
       // if the storage and the controllerContainer are full, store it in the terminal
       if (targetStructure == undefined) {
         if (homeRoom.terminal != undefined) {
@@ -105,12 +98,26 @@ Creep.prototype.depositEnergy =
         }
       }
 
+      // find closest spawn or extension which is not full
+      if (targetStructure == undefined) {
+        targetStructure = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
+              s.structureType == STRUCTURE_EXTENSION) &&
+            s.energy < s.energyCapacity
+        });
+      }
+
+      // look for storage
+      if (homeRoom.storage != undefined && targetStructure == undefined) {
+        targetStructure = homeRoom.storage;
+      }
+
       // if we found a target
       if (targetStructure != undefined) {
         // try to transfer energy, if it is not in range
         for (const resourceType in creep.carry) {
-          if (creep.transfer(targetStructure[0], resourceType) == ERR_NOT_IN_RANGE) {
-            creep.travelTo(targetStructure[0]);
+          if (creep.transfer(targetStructure, resourceType) == ERR_NOT_IN_RANGE) {
+            creep.travelTo(targetStructure);
           }
         }
       }

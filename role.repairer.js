@@ -36,13 +36,13 @@ module.exports = {
           filter: (s) => s.hits < 1000000 &&
             s.structureType == STRUCTURE_RAMPART
         });
-        var lowest = structure[0]
-        for (ram in structure) {
-          if (structure[ram].hits < lowest.hits) {
-            lowest = structure[ram];
-          }
-        }
         if (structure.length > 0) {
+          var lowest = structure[0]
+          for (ram in structure) {
+            if (structure[ram].hits < lowest.hits) {
+              lowest = structure[ram];
+            }
+          }
           if (creep.repair(lowest) == ERR_NOT_IN_RANGE) {
             creep.travelTo(lowest);
           }
