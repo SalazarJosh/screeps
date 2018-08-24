@@ -58,7 +58,7 @@ module.exports = {
         })[0];
         if(container != undefined){
           var mineral = mineralSources[0].mineralType;
-          // withdraw hydrogen from container
+          // withdraw mineral from container
           if (container.store[mineral] > 0) {
             if (creep.withdraw(container, mineral) == ERR_NOT_IN_RANGE) {
               creep.travelTo(container);

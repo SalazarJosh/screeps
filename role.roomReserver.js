@@ -1,8 +1,13 @@
 module.exports = {
   // a function to run the logic for this role
   run: function(creep) {
+    if(creep.room.controller.sign.text != "Hi. Please don't hurt me. 💗"){
+      if(creep.signController(creep.room.controller, "Hi. Please don't hurt me. 💗") == ERR_NOT_IN_RANGE) {
+        creep.travelTo(creep.room.controller);
+      }
+    }
     // if in target room
-    if (creep.room.name != creep.memory.target) {
+    else if (creep.room.name != creep.memory.target) {
       // find exit to target room
       var exit = creep.room.findExitTo(creep.memory.target);
       // move to exit

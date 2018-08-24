@@ -3,10 +3,17 @@ StructureLink.prototype.findLinkType = function() {
   let isMinerLink = this.pos.findInRange(FIND_SOURCES, 2)[0];
   if (isMinerLink != undefined) {
     if (this.energy == this.energyCapacity && this.cooldown == 0) {
-      var storageLink = this.findStorageLink();
-      if (storageLink != undefined) {
-        var availableStorageSpace = storageLink.energyCapacity - storageLink.energy;
-        this.transferEnergy(storageLink, availableStorageSpace);
+      var controllerLink = this.findControllerLink();
+      if (controllerLink != undefined || controllerLink.energy == storageLink.energyCapacity ){
+        var availableStorageSpace = controllerLink.energyCapacity - controllerLink.energy;
+        this.transferEnergy(controllerLink, availableStorageSpace);
+      }
+      else{
+        var storageLink = this.findStorageLink();
+        if (storageLink != undefined) {
+          var availableStorageSpace = storageLink.energyCapacity - storageLink.energy;
+          this.transferEnergy(storageLink, availableStorageSpace);
+        }
       }
     }
   } else {

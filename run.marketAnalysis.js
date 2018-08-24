@@ -3,8 +3,25 @@ StructureTerminal.prototype.runMarketAnalysis =
     // find the terminal (Change to run script from terminal later)
     const lookingToBuyHydrogen = false,
       lookingToSellEnergy = false,
-      mineralsToKeep = 5000,
+      mineralsToKeep = 2000,
       room = this.room.name;
+
+
+    // check for subscription token
+    const orders = Game.market.getAllOrders({
+      type: ORDER_SELL,
+      resourceType: SUBSCRIPTION_TOKEN
+    });
+    if (orders.length > 0) {
+      /// get the lowest selling price of all the orders
+      var lowestPrice = _.min(orders, function(o) {
+        return o.price;
+      });
+
+      if (lowestPrice.price < Game.market.credits) {
+        Game.market.deal(lowestPrice.id, 1);
+      }
+    }
 
     // select all the keys except for energy
     var storedMinerals = _.keys(_.omit(this.store, 'energy'));
@@ -22,27 +39,26 @@ StructureTerminal.prototype.runMarketAnalysis =
         var mineralCost;
 
         // find the mineral cost from memory
-        for (var mineralType in Memory.minCostOfMinerals){
-          if(mineralType == iteratedMineralType){
+        for (var mineralType in Memory.minCostOfMinerals) {
+          if (mineralType == iteratedMineralType) {
             mineralCost = Memory.minCostOfMinerals[mineralType];
           }
         }
-
         // get all the orders for the mineral
         const orders = Game.market.getAllOrders({
           type: ORDER_BUY,
           resourceType: iteratedMineralType
         });
+        if (orders.length > 0) {
+          /// get the highest offering price of all the orders
+          var highestPrice = _.max(orders, function(o) {
+            if (o.amount > 1) {
+              return o.price;
+            }
+          });
 
-        /// get the highest offering price of all the orders
-        var highestPrice = _.max(orders, function(o) {
-          if(o.amount > 1){
-            return o.price;
-          }
-        });
-
-        // make sure the highestPrice is still above what we want to get paid
-        if (highestPrice.price >= mineralCost) {
+          // make sure the highestPrice is still above what we want to get paid
+          //if (highestPrice.price >= mineralCost) {
           // get the transfer energy cost to make sure we can afford the transfer
           const transferEnergyCost = Game.market.calcTransactionCost(amountToSell, room, highestPrice.roomName);
           if (transferEnergyCost < maxTransferEnergyCost) {
@@ -103,7 +119,7 @@ StructureTerminal.prototype.runMarketAnalysis =
       if (this.store[RESOURCE_ENERGY] > 10000) {
         const amountToSell = this.store[RESOURCE_ENERGY] - 10000,
           maxTransferEnergyCost = 10000,
-          minCostOfEnergy = .03;
+          minCostOfEnergy = .04;
         // get all the orders for energy
         const orders = Game.market.getAllOrders({
           type: ORDER_BUY,
@@ -132,4 +148,4 @@ StructureTerminal.prototype.runMarketAnalysis =
         }
       }
     }
-};
+  };

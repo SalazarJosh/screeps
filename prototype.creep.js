@@ -23,7 +23,8 @@ var roles = {
   controllerAttacker: require('role.controllerAttacker'),
   skRoomAttacker: require('role.SKRoomAttacker'),
   SKRoomEnergyMiner: require('role.SKRoomEnergyMiner'),
-  SKRoomHauler: require('role.SKRoomHauler')
+  SKRoomHauler: require('role.SKRoomHauler'),
+  looter: require('role.looter')
 };
 
 Creep.prototype.runRole =
@@ -78,6 +79,16 @@ Creep.prototype.depositEnergy =
 
     // if we can see our home room...
     if (homeRoom != undefined) {
+
+      // find closest spawn or extension which is not full
+      if (targetStructure == undefined) {
+        targetStructure = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+          filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
+              s.structureType == STRUCTURE_EXTENSION) &&
+            s.energy < s.energyCapacity
+        });
+      }
+
       // if the storage is full, drop it into the container by the controller
       if (targetStructure == undefined) {
         controllerContainer = homeRoom.controller.pos.findInRange(FIND_STRUCTURES, 3, {
@@ -88,7 +99,7 @@ Creep.prototype.depositEnergy =
           targetStructure = controllerContainer;
         }
       }
-      
+
       // if the storage and the controllerContainer are full, store it in the terminal
       if (targetStructure == undefined) {
         if (homeRoom.terminal != undefined) {
@@ -96,15 +107,6 @@ Creep.prototype.depositEnergy =
             targetStructure = homeRoom.terminal;
           }
         }
-      }
-
-      // find closest spawn or extension which is not full
-      if (targetStructure == undefined) {
-        targetStructure = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
-          filter: (s) => (s.structureType == STRUCTURE_SPAWN ||
-              s.structureType == STRUCTURE_EXTENSION) &&
-            s.energy < s.energyCapacity
-        });
       }
 
       // look for storage

@@ -6,10 +6,8 @@ module.exports = {
     if (creep.memory.target != undefined &&
       creep.room.name != creep.memory.target &&
       creep.memory.working == false) {
-      // find exit to target room
-      var exit = creep.room.findExitTo(creep.memory.target);
-      // move to exit
-      creep.travelTo(creep.pos.findClosestByRange(exit));
+        // move to target room
+      creep.travelTo(new RoomPosition(25,25,creep.memory.target));
       // return the function to not do anything else
       return;
     }
@@ -31,13 +29,8 @@ module.exports = {
       if (creep.room.name == creep.memory.home) {
         creep.depositEnergy();
       }
-
-      // if not in target room
-      else {
-        // find exit to target room
-        var exit = creep.room.findExitTo(creep.memory.home);
-        // move to exit
-        creep.travelTo(creep.pos.findClosestByRange(exit));
+      else{
+        creep.travelTo(new RoomPosition(25,25,creep.memory.home));
       }
     }
 
@@ -96,13 +89,6 @@ module.exports = {
         }
       }
 
-      // if not in target room
-      else {
-        // find exit to target room
-        var exit = creep.room.findExitTo(creep.memory.target);
-        // move to exit
-        creep.travelTo(creep.pos.findClosestByRange(exit));
-      }
     }
   }
 };

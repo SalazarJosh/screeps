@@ -51,7 +51,7 @@ StructureTower.prototype.defend =
       // get all ramparts
       var ramparts = this.room.find(FIND_STRUCTURES, {
         filter: (s) => s.structureType == STRUCTURE_RAMPART
-        && s.hits < 1000000
+        && s.hits < 2000000
       });
 
       // if (walls.length > 0) {

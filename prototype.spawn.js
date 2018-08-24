@@ -68,6 +68,10 @@ StructureSpawn.prototype.spawnCreepsIfNecessary =
         this.checkForSKRoomCreeps(name, numberOfCreeps, creepsFromRoom);
       }
 
+      if (name == undefined) {
+        this.checkForMiscCreeps(name, numberOfCreeps, creepsFromRoom);
+      }
+
       // spawn up to three upgraders / builders if the room has excess energy to use
       if (name == undefined &&
         this.room.energyAvailable == this.room.energyCapacityAvailable &&
@@ -97,7 +101,7 @@ StructureSpawn.prototype.checkForBackupCreeps =
   function(name, numberOfCreeps) {
     // if no harvesters are left AND either no miners or no lorries are left
     //  create a backup creep
-    if (numberOfCreeps['harvester'] == 0 && numberOfCreeps['lorry'] == 0) {
+    if (numberOfCreeps['harvester'] == 0 && numberOfCreeps['lorry'] == 0 && numberOfCreeps['longDistanceHauler'] == 0) {
       // if there are still miners or enough energy in Storage left
       if (numberOfCreeps['miner'] > 0) {
         // create a lorry
@@ -231,7 +235,7 @@ StructureSpawn.prototype.checkForMainRoomCreeps =
           name = this.createDismantler(this.room.energyCapacityAvailable, this.room.name);
           return;
         } else if (role == 'upgrader' && this.room.energyAvailable >= 1200) {
-          name = this.createBigUpgrader(1200, this.room.name)
+          name = this.createBigUpgrader(this.room.energyCapacityAvailable, this.room.name)
           return;
         } else {
           if (this.room.energyCapacityAvailable >= 800) {
@@ -293,7 +297,7 @@ StructureSpawn.prototype.checkForMiningRoomCreeps =
             }
           }
           // if we don't need a miner, spawn a claimer if we can afford it
-          if (name == undefined && this.energyCapacityAvailable > 1600) {
+          if (name == undefined && this.room.energyCapacityAvailable > 1300) {
             //console.log(roomName, Game.rooms[roomName].controller.reservation)
             numberOfMiningRoomClaimers[roomName] = _.sum(Game.creeps, (c) =>
               c.memory.role == 'roomReserver' && c.memory.target == roomName)
@@ -412,7 +416,19 @@ StructureSpawn.prototype.checkForSKRoomCreeps =
     }
   };
 
+StructureSpawn.prototype.checkForMiscCreeps =
+  function(name, numberOfCreeps, creepsFromRoom) {
+    let numberOfLooters = {};
 
+    for(let roomName in this.memory.miscRooms){
+      numberOfLooters[roomName] = _.sum(Game.creeps, (c) =>
+        c.memory.role == 'looter' && c.memory.target == roomName);
+
+      if(numberOfLooters[roomName]< this.memory.miscRooms[roomName].numberOfLooters){
+        name = this.createLooter(this.room.energyCapacityAvailable, this.room.name, roomName, false);
+      }
+    }
+  }
 
 StructureSpawn.prototype.createNewRoomRepairer =
   function(energy, roleName, home, target) {
@@ -696,6 +712,36 @@ StructureSpawn.prototype.createLongDistanceHauler =
     });
     return (trySpawn == 0 ? creepName : undefined);
   };
+
+  StructureSpawn.prototype.createLooter =
+    function(energy, home, target) {
+      var body = [];
+
+      var role = 'looter'
+
+      // create a balanced body as big as possible with the given energy
+      var numberOfParts = Math.floor(energy / 50);
+
+      // make sure the creep isn't more than 50 parts
+      numberOfParts = Math.min(numberOfParts, 50);
+
+      for (let i = 0; i < _.floor(numberOfParts / 2 - 1); i++) {
+        body.push(MOVE);
+        body.push(CARRY);
+      }
+      var creepName = "C" + Game.time.toString(26).slice(-6) + Math.random().toString(26).slice(-3).toUpperCase();
+
+      // create creep with the created body and the role 'longDistanceHauler'
+      var trySpawn = this.spawnCreep(body, creepName, {
+        memory: {
+          role: role,
+          working: false,
+          home: home,
+          target: target
+        }
+      });
+      return (trySpawn == 0 ? creepName : undefined);
+    };
 
 StructureSpawn.prototype.createEnemyRoomHauler =
   function(energy, home, target) {

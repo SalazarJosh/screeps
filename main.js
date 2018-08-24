@@ -15,7 +15,7 @@ profiler.enable();
 module.exports.loop = function() {
   const gameTime = Game.time;
   profiler.wrap(function() {
-    //Memory.minCostOfMinerals = { H: 1, O: .6, Z: .79};
+    // Memory.minCostOfMinerals = {  H:.135, O: .07, K: .09,  };
     // check for memory entries of dead creeps by iterating over Memory.creeps
     for (let name in Memory.creeps) {
       // and checking if the creep is still alive
@@ -65,7 +65,7 @@ module.exports.loop = function() {
       for (let terminal of terminals) {
         if (terminal.cooldown == 0) {
           // run market logic
-          terminal.runMarketAnalysis();
+          //terminal.runMarketAnalysis();
         }
       }
 
@@ -81,7 +81,7 @@ module.exports.loop = function() {
             structureType: STRUCTURE_EXTENSION
           }
         });
-        
+
         totalNumberOfExtensions = numberOfExtensions.length + numberOfExtensionConstructionSites.length;
 
         numberOfAvailableExtensions = CONTROLLER_STRUCTURES["extension"][Game.rooms[room].controller.level];
